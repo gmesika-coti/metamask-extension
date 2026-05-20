@@ -551,7 +551,11 @@ export default class MetamaskController extends EventEmitter {
 
     this.initializeChainlist();
 
-    this.wallet = initializeWallet(controllerMessenger, initState);
+    this.wallet = initializeWallet({
+      messenger: controllerMessenger,
+      state: initState,
+      encryptor: this.opts.encryptor,
+    });
 
     this.controllerMessenger = controllerMessenger;
     this.currentMigrationVersion = opts.currentMigrationVersion;
