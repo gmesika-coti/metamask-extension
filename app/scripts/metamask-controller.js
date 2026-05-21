@@ -1015,10 +1015,7 @@ export default class MetamaskController extends EventEmitter {
           // If not, discovery will fallback to the primary keyring ID anyway.
           const id = selected?.options?.entropy?.id;
 
-          await this.controllerMessenger.call(
-            'LegacyBackgroundApiService:getSnapKeyring',
-          );
-
+          await this.legacyBackgroundApiService.getSnapKeyring();
           await this.accountTreeController.syncWithUserStorageAtLeastOnce();
 
           if (firstTimeFlowType === FirstTimeFlowType.socialImport) {
@@ -3222,9 +3219,7 @@ export default class MetamaskController extends EventEmitter {
           this.accountTreeController,
         ),
       syncAccountTreeWithUserStorage: async () => {
-        await this.controllerMessenger.call(
-          'LegacyBackgroundApiService:getSnapKeyring',
-        );
+        await this.legacyBackgroundApiService.getSnapKeyring();
         await this.accountTreeController.syncWithUserStorage();
       },
 
@@ -3920,10 +3915,7 @@ export default class MetamaskController extends EventEmitter {
       createSnapAccount: async (snapId, options, internalOptions) => {
         // NOTE: We should probably start using `withKeyring` with `createIfMissing: true`
         // in this case.
-        const keyring = await this.controllerMessenger.call(
-          'LegacyBackgroundApiService:getSnapKeyring',
-        );
-
+        const keyring = await this.legacyBackgroundApiService.getSnapKeyring();
         return await keyring.createAccount(snapId, options, internalOptions);
       },
 
@@ -4986,9 +4978,7 @@ export default class MetamaskController extends EventEmitter {
       // TODO: Move this logic to the SnapKeyring directly.
       // Forward selected accounts to the Snap keyring, so each Snaps can fetch those accounts.
       await this.forwardSelectedAccountGroupToSnapKeyring(
-        await this.controllerMessenger.call(
-          'LegacyBackgroundApiService:getSnapKeyring',
-        ),
+        await this.legacyBackgroundApiService.getSnapKeyring(),
         this.accountTreeController.getSelectedAccountGroup(),
       );
 
@@ -5053,10 +5043,7 @@ export default class MetamaskController extends EventEmitter {
       }
 
       // Ensure the snap keyring is initialized
-      await this.controllerMessenger.call(
-        'LegacyBackgroundApiService:getSnapKeyring',
-      );
-
+      await this.legacyBackgroundApiService.getSnapKeyring();
       const wallet = this.multichainAccountService.getMultichainAccountWallet({
         entropySource: keyringIdToDiscover,
       });
@@ -5343,9 +5330,7 @@ export default class MetamaskController extends EventEmitter {
       // TODO: Move this logic to the SnapKeyring directly.
       // Forward selected accounts to the Snap keyring, so each Snaps can fetch those accounts.
       await this.forwardSelectedAccountGroupToSnapKeyring(
-        await this.controllerMessenger.call(
-          'LegacyBackgroundApiService:getSnapKeyring',
-        ),
+        await this.legacyBackgroundApiService.getSnapKeyring(),
         this.accountTreeController.getSelectedAccountGroup(),
       );
 
@@ -5353,9 +5338,7 @@ export default class MetamaskController extends EventEmitter {
         // check if external services are enabled
         const { useExternalServices } = this.preferencesController.state;
         if (useExternalServices) {
-          await this.controllerMessenger.call(
-            'LegacyBackgroundApiService:getSnapKeyring',
-          );
+          await this.legacyBackgroundApiService.getSnapKeyring();
           await this.accountTreeController.syncWithUserStorageAtLeastOnce();
         }
         await this.discoverAndCreateAccounts(id);
@@ -5383,9 +5366,7 @@ export default class MetamaskController extends EventEmitter {
   }
 
   async _getMultichainWalletSnapClient(snapId) {
-    const keyring = await this.controllerMessenger.call(
-      'LegacyBackgroundApiService:getSnapKeyring',
-    );
+    const keyring = await this.legacyBackgroundApiService.getSnapKeyring();
     const messenger = this.controllerMessenger;
 
     return new MultichainWalletSnapClient(snapId, keyring, messenger);
@@ -5407,9 +5388,7 @@ export default class MetamaskController extends EventEmitter {
         },
       );
       if (isHdKeyring) {
-        await this.controllerMessenger.call(
-          'LegacyBackgroundApiService:getSnapKeyring',
-        );
+        await this.legacyBackgroundApiService.getSnapKeyring();
         await this.accountTreeController.syncWithUserStorageAtLeastOnce();
         await this.discoverAndCreateAccounts(metadata.id);
       }
@@ -5564,9 +5543,7 @@ export default class MetamaskController extends EventEmitter {
     // getSnapKeyring to ensure the Snap keyring is available.
     // eslint-disable-next-line no-void
     void this.forwardSelectedAccountGroupToSnapKeyring(
-      await this.controllerMessenger.call(
-        'LegacyBackgroundApiService:getSnapKeyring',
-      ),
+      await this.legacyBackgroundApiService.getSnapKeyring(),
       this.accountTreeController.getSelectedAccountGroup(),
     );
 
