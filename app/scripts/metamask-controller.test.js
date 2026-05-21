@@ -83,6 +83,7 @@ import {
 import { PATCH_STORE_SUBSTREAM_METHODS } from '../../shared/constants/patch-store-substream-methods';
 import * as environment from '../../shared/lib/environment';
 import * as metamaskControllerUtils from '../../shared/lib/metamask-controller-utils';
+import { KNOWN_PUBLIC_KEY_ADDRESSES } from '../../test/stub/keyring-bridge';
 import { ReferralStatus } from './controllers/preferences-controller';
 import { METAMASK_COOKIE_HANDLER } from './constants/stream';
 import {
@@ -93,7 +94,6 @@ import {
 import { forwardRequestToSnap } from './lib/forwardRequestToSnap';
 import { ReferralTriggerType } from './lib/createDefiReferralMiddleware';
 import MetaMaskController from './metamask-controller';
-import { KNOWN_PUBLIC_KEY_ADDRESSES } from '../../test/stub/keyring-bridge';
 
 // Opt out of the global `isAssetsUnifyStateFeatureEnabled` mock (see test/jest/setup.js)
 // so these tests exercise the real feature-flag gating logic via state.
@@ -255,25 +255,6 @@ jest.mock('../../shared/lib/trace', () => ({
   trace: jest.fn(),
   endTrace: jest.fn(),
 }));
-
-const buildMockKeyringBridge = (
-  publicKeyPayload,
-  appConfiguration = {
-    arbitraryDataEnabled: 1,
-    erc20ProvisioningNecessary: 0,
-    starkEnabled: 0,
-    starkv2Supported: 0,
-    version: '1.0.0',
-  },
-) =>
-  jest.fn(() => ({
-    init: jest.fn(),
-    dispose: jest.fn(),
-    destroy: jest.fn(),
-    updateTransportMethod: jest.fn(),
-    getPublicKey: jest.fn(async () => publicKeyPayload),
-    getAppConfiguration: jest.fn(async () => appConfiguration),
-  }));
 
 const mockIsManifestV3 = jest.fn().mockReturnValue(false);
 jest.mock('../../shared/lib/mv3.utils', () => ({
