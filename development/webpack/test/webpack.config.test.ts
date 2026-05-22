@@ -6,6 +6,8 @@ import process from 'node:process';
 import { join, resolve } from 'node:path';
 import {
   type Configuration,
+  type RuleSetRule,
+  type Stats,
   webpack,
   Compiler,
   WebpackPluginInstance,
@@ -24,6 +26,36 @@ function getWebpackInstance(config: Configuration) {
   // so we just delete the watch property.
   delete config.watch;
   return webpack(config);
+}
+
+async function getWebpackWarnings(config: Configuration): Promise<string[]> {
+  const compiler = webpack(config);
+
+  try {
+    const stats = await new Promise<Stats>((resolveStats, rejectStats) => {
+      compiler.run((error, result) => {
+        if (error) {
+          rejectStats(error);
+          return;
+        }
+
+        if (!result) {
+          rejectStats(new Error('Webpack finished without returning stats.'));
+          return;
+        }
+
+        resolveStats(result);
+      });
+    });
+
+    return stats
+      .toJson({ all: false, warnings: true })
+      .warnings.map((warning) => warning.message);
+  } finally {
+    await new Promise<void>((resolveClose, rejectClose) =>
+      compiler.close((error) => (error ? rejectClose(error) : resolveClose())),
+    );
+  }
 }
 
 async function withWatching<T>(
@@ -81,6 +113,8 @@ describe('webpack.config.test.ts', () => {
   let originalArgv: string[];
   let originalEnv: NodeJS.ProcessEnv;
   const originalReadFileSync = fs.readFileSync;
+  const protobufInquireWarning =
+    'Critical dependency: the request of a dependency is an expression';
   before(() => {
     // cache originals before we start messing with them
     originalArgv = process.argv;
@@ -220,6 +254,71 @@ ${Object.entries(env)
       (plugin) => plugin && plugin.constructor.name === 'ProgressPlugin',
     );
     assert(progressPlugin, 'Progress plugin should present');
+  });
+
+  it('suppresses the @protobufjs/inquire dynamic require warning only while it is still needed', async () => {
+    using tempDirectory = fs.mkdtempDisposableSync(
+      join(tmpdir(), 'protobuf-inquire-warning-test-'),
+    );
+    const entryPath = join(tempDirectory.path, 'entry.js');
+    fs.writeFileSync(
+      entryPath,
+      `
+const inquire = require('@protobufjs/inquire');
+inquire('long');
+`,
+    );
+
+    const config: Configuration = getWebpackConfig(['--no-progress']);
+    const protobufInquireRule = config.module?.rules?.find(
+      (rule) =>
+        rule &&
+        typeof rule === 'object' &&
+        'test' in rule &&
+        String(rule.test).includes('@protobufjs'),
+    ) as RuleSetRule | undefined;
+    assert(
+      protobufInquireRule,
+      'Expected a parser rule for @protobufjs/inquire.',
+    );
+
+    const getConfig = (name: string, rules: RuleSetRule[]): Configuration => ({
+      mode: 'development',
+      context: resolve(__dirname, '../../..'),
+      entry: entryPath,
+      output: {
+        path: join(tempDirectory.path, name),
+        filename: 'bundle.js',
+      },
+      cache: false,
+      stats: 'none',
+      infrastructureLogging: { level: 'none' },
+      resolve: {
+        modules: [join(__dirname, '../../../node_modules'), 'node_modules'],
+      },
+      module: { rules },
+    });
+
+    const warningsWithRule = await getWebpackWarnings(
+      getConfig('with-rule', [protobufInquireRule]),
+    );
+    assert.deepStrictEqual(
+      warningsWithRule.filter((warning) =>
+        warning.includes(protobufInquireWarning),
+      ),
+      [],
+      'Expected the @protobufjs/inquire parser rule to suppress the dynamic require warning.',
+    );
+
+    const warningsWithoutRule = await getWebpackWarnings(
+      getConfig('without-rule', []),
+    );
+    assert(
+      warningsWithoutRule.some((warning) =>
+        warning.includes(protobufInquireWarning),
+      ),
+      'Expected @protobufjs/inquire to still emit this warning without the workaround. If this fails, remove the parser rule.',
+    );
   });
 
   it('should apply non-default options', () => {
