@@ -25,8 +25,6 @@ import { HardwareKeyringNames } from '../../shared/constants/hardware-wallets';
 import { FirstTimeFlowType } from '../../shared/constants/onboarding';
 import { ExtensionPasskeyErrorCode } from '../../shared/lib/passkey/passkey-error';
 import MetaMaskController from './metamask-controller';
-import NotificationManager from './lib/notification-manager';
-
 const mockToHardwareWalletError = jest.fn();
 const mockIsUserRejectedHardwareWalletError = jest.fn().mockReturnValue(false);
 
