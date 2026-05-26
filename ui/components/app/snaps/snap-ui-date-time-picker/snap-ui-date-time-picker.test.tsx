@@ -367,9 +367,9 @@ describe('SnapUIDateTimePicker', () => {
     });
   });
 
-  describe('onChange (intermediate selections)', () => {
-    it('does not call handleInputChange on intermediate onChange', () => {
-      let capturedOnChange: (date: DateTime | null) => void = jest.fn();
+  describe('intermediate selections', () => {
+    it('does not pass onChange to the picker (state only updates on accept)', () => {
+      let capturedOnChange: unknown = 'NOT_SET';
       mockDateTimePicker.mockImplementation(({ onChange }) => {
         capturedOnChange = onChange;
         return <div data-testid="mock-datetime-picker" />;
@@ -377,31 +377,7 @@ describe('SnapUIDateTimePicker', () => {
 
       render(<SnapUIDateTimePicker name="test" type="datetime" />);
 
-      act(() => {
-        capturedOnChange(MOCK_DATETIME);
-      });
-
-      expect(mockHandleInputChange).not.toHaveBeenCalled();
-    });
-
-    it('updates the internal picker value on onChange', () => {
-      let capturedOnChange: (date: DateTime | null) => void = jest.fn();
-      const receivedValues: (DateTime | null)[] = [];
-      mockDateTimePicker.mockImplementation(({ onChange, value }) => {
-        capturedOnChange = onChange;
-        receivedValues.push(value);
-        return <div data-testid="mock-datetime-picker" />;
-      });
-
-      render(<SnapUIDateTimePicker name="test" type="datetime" />);
-
-      act(() => {
-        capturedOnChange(MOCK_DATETIME);
-      });
-
-      const lastValue = receivedValues[receivedValues.length - 1];
-      const expected = MOCK_DATETIME.set({ second: 0, millisecond: 0 });
-      expect(lastValue?.toISO()).toBe(expected.toISO());
+      expect(capturedOnChange).toBeUndefined();
     });
   });
 
@@ -514,6 +490,50 @@ describe('SnapUIDateTimePicker', () => {
         'test',
         expected.toISO(),
         'my-form',
+      );
+    });
+  });
+
+  describe('cancel preserves picker value', () => {
+    it('keeps the committed value when the dialog is closed without accepting', () => {
+      let capturedOnAccept: (date: DateTime | null) => void = jest.fn();
+      let capturedOnOpen: () => void = jest.fn();
+      let capturedOnClose: () => void = jest.fn();
+      let capturedValue: DateTime | null = null;
+
+      mockDateTimePicker.mockImplementation(
+        ({ onAccept, onOpen, onClose, value }) => {
+          capturedOnAccept = onAccept;
+          capturedOnOpen = onOpen;
+          capturedOnClose = onClose;
+          capturedValue = value;
+          return <div data-testid="mock-datetime-picker" />;
+        },
+      );
+
+      const { rerender } = render(
+        <SnapUIDateTimePicker name="test" type="datetime" />,
+      );
+
+      act(() => capturedOnOpen());
+      rerender(<SnapUIDateTimePicker name="test" type="datetime" />);
+
+      act(() => capturedOnAccept(MOCK_DATETIME));
+      rerender(<SnapUIDateTimePicker name="test" type="datetime" />);
+
+      act(() => capturedOnClose());
+      rerender(<SnapUIDateTimePicker name="test" type="datetime" />);
+
+      const committedValue = capturedValue;
+
+      act(() => capturedOnOpen());
+      rerender(<SnapUIDateTimePicker name="test" type="datetime" />);
+
+      act(() => capturedOnClose());
+      rerender(<SnapUIDateTimePicker name="test" type="datetime" />);
+
+      expect(capturedValue?.toISO()).toBe(
+        (committedValue as DateTime).toISO(),
       );
     });
   });
