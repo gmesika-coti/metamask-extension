@@ -335,9 +335,7 @@
       "MetaMask: Background connection not initialized": 2,
       "Reselect: Identity function warnings": 1
     },
-    "ui/components/app/snaps/snap-ui-renderer/components/date-time-picker.test.ts": {
-      "warn: Material-UI: You are trying to": 5
-    },
+    "ui/components/app/snaps/snap-ui-renderer/components/date-time-picker.test.ts": {},
     "ui/components/app/snaps/snap-ui-renderer/snap-ui-renderer.test.js": {
       "error: Warning: React does not recognize": 1
     },

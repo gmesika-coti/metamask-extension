@@ -189,6 +189,13 @@ export const SnapUIDateTimePicker: FunctionComponent<
     }
   }, [initialValue]);
 
+  const handleChange = (date: DateTime | null) => {
+    if (!date) {
+      return;
+    }
+    setPickerValue(normalizeDate(date, type) as DateTime);
+  };
+
   const handleAccept = (date: DateTime | null) => {
     if (!date) {
       setCommitted(false);
@@ -263,6 +270,7 @@ export const SnapUIDateTimePicker: FunctionComponent<
           onOpen={handleOpen}
           onClose={handleClose}
           value={pickerValue}
+          onChange={handleChange}
           onAccept={handleAccept}
           disabled={disabled}
           disablePast={disablePast}
@@ -284,6 +292,7 @@ export const SnapUIDateTimePicker: FunctionComponent<
           onOpen={handleOpen}
           onClose={handleClose}
           value={pickerValue}
+          onChange={handleChange}
           onAccept={handleAccept}
           disabled={disabled}
           disablePast={disablePast}
@@ -304,6 +313,7 @@ export const SnapUIDateTimePicker: FunctionComponent<
           onOpen={handleOpen}
           onClose={handleClose}
           value={pickerValue}
+          onChange={handleChange}
           onAccept={handleAccept}
           disabled={disabled}
           ampm={false}
